@@ -17,6 +17,7 @@
 
 #include "Locales.h"
 #include <boost/locale/generator.hpp>
+#include <clocale>
 
 namespace
 {
@@ -32,8 +33,10 @@ void Trinity::Locale::Init()
     _global = std::locale(_global, std::locale::classic(), std::locale::numeric);
     std::locale::global(_global);
 
-    std::setlocale(LC_ALL, "");
-    std::setlocale(LC_NUMERIC, "C");
+//    std::setlocale(LC_ALL, "");
+    setlocale(LC_ALL, "");
+//    std::setlocale(LC_NUMERIC, "C");
+    setlocale(LC_NUMERIC, "C");
 
     boost::locale::generator g;
     _calendar = g.generate(utf8, "");

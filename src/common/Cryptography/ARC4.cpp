@@ -17,9 +17,17 @@
 
 #include "ARC4.h"
 #include "Errors.h"
+#include <openssl/err.h>
+#include <openssl/provider.h>
 
 Trinity::Crypto::ARC4::ARC4() : _ctx(EVP_CIPHER_CTX_new())
 {
+    OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
+    if (!legacy) {
+        // Handle error: legacy provider not loaded
+        std::cerr << "Failed to load legacy provider.\n";
+    }
+
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
     _cipher = EVP_CIPHER_fetch(nullptr, "RC4", nullptr);
 #else
@@ -28,6 +36,21 @@ Trinity::Crypto::ARC4::ARC4() : _ctx(EVP_CIPHER_CTX_new())
 
     EVP_CIPHER_CTX_init(_ctx);
     int result = EVP_EncryptInit_ex(_ctx, _cipher, nullptr, nullptr, nullptr);
+// Added by sdalton
+    if (_cipher) {
+        std::cerr << "Cipher name: " << EVP_CIPHER_name(_cipher) << std::endl;
+    } else {
+        std::cerr << "Cipher not found." << std::endl;
+    }
+    ERR_print_errors_fp(stderr); // Print any accumulated OpenSSL errors
+    std::cerr << "OpenSSL Version: " << OPENSSL_VERSION_TEXT << "\n";
+    unsigned long errCode;
+    while ((errCode = ERR_get_error()) != 0) {
+        char *err = ERR_error_string(errCode, NULL);
+        std::cerr << "OpenSSL Error: " << err << std::endl;
+    }
+// End Added by sdalton
+
     ASSERT(result == 1);
 }
 
